@@ -1,0 +1,794 @@
+<title>Invista na Prevenção</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: relato de inspeção no topo (placa amarela), melhorias como cartas de compra com preço em moedas, barra de orçamento fixa na base e resultado comparando o seu investimento com a melhor combinação possível. */
+:root {
+  --bg: #ECEEEA;
+  --surface: #F8F9F6;
+  --ink: #15191B;
+  --muted: #586168;
+  --line: #C5CBC4;
+  --signal: #FFC20E;
+  --signal-ink: #15191B;
+  --sel-bg: #FFF1BF;
+  --ok: #1B7444;
+  --ok-bg: #DCEFE3;
+  --bad: #BF2D28;
+  --bad-bg: #F7DDDB;
+  --info: #1F5CA6;
+  --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111416; --surface: #1A1F22; --ink: #EDEFEA; --muted: #98A2A8; --line: #313A3F;
+    --sel-bg: #3A3112; --ok: #5ECB8C; --ok-bg: #16301F; --bad: #FF7E76; --bad-bg: #3A1E1C; --info: #79ADEA;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111416; --surface: #1A1F22; --ink: #EDEFEA; --muted: #98A2A8; --line: #313A3F;
+  --sel-bg: #3A3112; --ok: #5ECB8C; --ok-bg: #16301F; --bad: #FF7E76; --bad-bg: #3A1E1C; --info: #79ADEA;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+.app { max-width: 960px; margin: 0 auto; font-size: 16px; line-height: 1.5; }
+.app.big { font-size: 21px; }
+
+.top {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 16px;
+  font: 500 .75em var(--font-mono); text-transform: uppercase; letter-spacing: .12em; color: var(--muted);
+}
+.switch { display: inline-flex; align-items: center; gap: .6em; cursor: pointer; }
+.switch input { width: 1.1em; height: 1.1em; accent-color: var(--info); margin: 0; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.stack { display: grid; gap: 16px; min-width: 0; }
+
+.coin {
+  display: inline-grid; place-items: center; width: 1.25em; height: 1.25em; border-radius: 50%;
+  background: var(--signal); color: var(--signal-ink); border: 2px solid var(--signal-ink);
+  font: 700 .7em var(--font-mono); line-height: 1; flex: none;
+}
+
+/* Abertura */
+.hero { background: var(--signal); color: var(--signal-ink); padding: 1.6em 1.5em 0; overflow: hidden; }
+.eyebrow { margin: 0 0 .8em; font: 600 .75em var(--font-mono); text-transform: uppercase; letter-spacing: .14em; }
+.hero h1 {
+  margin: 0; font: 800 clamp(3rem, 11vw, 5.6rem)/.9 var(--font-display);
+  text-transform: uppercase; letter-spacing: .01em; text-wrap: balance;
+}
+.lead { margin: 1em 0 0; max-width: 36em; font-size: 1.05em; font-weight: 500; }
+.stripes {
+  height: 14px; margin: 1.6em -1.5em 0;
+  background: repeating-linear-gradient(-45deg, var(--signal-ink) 0 14px, transparent 14px 28px);
+}
+
+.panel { background: var(--surface); border: 2px solid var(--line); padding: 1.1em 1.25em; min-width: 0; }
+.field { display: grid; gap: .4em; margin-bottom: 1em; }
+.field label.lbl { font: 600 .75em var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.field input[type="text"], .field select {
+  width: 100%; padding: .7em .8em; border: 2px solid var(--line); background: var(--bg); border-radius: 0;
+}
+.field input:focus-visible, .field select:focus-visible, .btn:focus-visible, .linkbtn:focus-visible, .card:focus-visible {
+  outline: 3px solid var(--info); outline-offset: 2px;
+}
+
+.rules { margin: 0 0 1.2em; padding: 0; display: grid; gap: .45em; }
+.rules div { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: .75em; align-items: baseline; font-size: .95em; }
+.rules dt { font: 600 .8em var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.rules dd { margin: 0; }
+
+.btn {
+  background: var(--signal); color: var(--signal-ink); border: 0; padding: .85em 1.5em;
+  font-weight: 700; font-size: 1em; border-radius: 0;
+}
+.btn:hover:not(:disabled) { filter: brightness(.95); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.quiet { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+.btn.quiet:hover:not(:disabled) { border-color: var(--ink); filter: none; }
+.linkbtn { background: none; border: 0; padding: .3em 0; color: var(--muted); font-size: .8em; text-decoration: underline; }
+
+/* Ranking */
+.board h2, .section-title {
+  margin: 0 0 .5em; font: 800 1.7em/1 var(--font-display); text-transform: uppercase; letter-spacing: .02em;
+}
+.board ol { list-style: none; margin: 0; padding: 0; }
+.board li {
+  display: grid; grid-template-columns: 2em minmax(0, 1fr) auto; gap: .6em; align-items: baseline;
+  padding: .55em .4em; border-bottom: 1px solid var(--line);
+}
+.board li .pos { font: 600 .85em var(--font-mono); color: var(--muted); }
+.board li .nm { overflow-wrap: anywhere; }
+.board li .pts { font: 600 .95em var(--font-mono); font-variant-numeric: tabular-nums; }
+.board li.me { background: var(--signal); color: var(--signal-ink); border-bottom-color: transparent; }
+.board li.me .pos { color: var(--signal-ink); }
+.board li.empty { display: block; color: var(--muted); border-bottom: 0; padding: .4em 0 .8em; }
+.note { margin: .8em 0 0; font-size: .8em; color: var(--muted); }
+
+/* Jogo */
+.hud { margin-bottom: 14px; }
+.segs { display: grid; gap: 4px; }
+.segs span { height: 8px; background: var(--line); }
+.segs span.cur { background: var(--signal); outline: 1px solid var(--ink); }
+.segs span.good { background: var(--ok); }
+.segs span.mid { background: var(--signal); }
+.segs span.poor { background: var(--bad); }
+.hudrow {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5em 1.2em; margin-top: .7em;
+  font: 500 .8em var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+}
+.hudrow b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.qcard { background: var(--surface); border: 2px solid var(--ink); }
+.qhead {
+  background: var(--signal); color: var(--signal-ink); padding: .5em 1.1em;
+  font: 600 .75em var(--font-mono); text-transform: uppercase; letter-spacing: .12em;
+}
+.qbody { padding: 1.2em; }
+.qbody h2 { margin: 0 0 .5em; font: 800 1.9em/1 var(--font-display); text-transform: uppercase; letter-spacing: .01em; outline: none; }
+.qbody p { margin: 0 0 .9em; }
+.obs-title { margin: 0 0 .4em; font: 600 .75em var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.obs { margin: 0; padding-left: 1.2em; display: grid; gap: .4em; }
+
+.sec { margin: 1.4em 0 .6em; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .3em 1em; }
+.sec h3 { margin: 0; font: 800 1.4em/1 var(--font-display); text-transform: uppercase; letter-spacing: .02em; }
+.sec span { font-size: .85em; color: var(--muted); }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 700px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+.card {
+  display: grid; align-content: start; gap: .5em; text-align: left; padding: .85em 1em;
+  background: var(--surface); border: 2px solid var(--line); border-radius: 0; min-width: 0;
+}
+.card .row { display: flex; justify-content: space-between; gap: .8em; align-items: flex-start; }
+.card .mname { display: block; font-weight: 600; line-height: 1.35; min-width: 0; }
+.card .cost { display: inline-flex; align-items: center; gap: .35em; font: 600 .95em var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card:hover:not(:disabled) { border-color: var(--ink); }
+.card.sel { border-color: var(--ink); background: var(--sel-bg); }
+.card.sel .mname::before { content: "✓ "; font-family: var(--font-mono); }
+.card:disabled { cursor: default; color: var(--ink); }
+.card.locked { opacity: .45; }
+.tags { display: flex; flex-wrap: wrap; gap: .4em; }
+.tag {
+  display: inline-block; padding: .15em .55em; font: 600 .7em var(--font-mono);
+  text-transform: uppercase; letter-spacing: .06em; border: 1.5px solid var(--line); background: var(--bg);
+}
+.tag.mine { border-color: var(--ink); }
+.tag.best { background: var(--signal); color: var(--signal-ink); border-color: var(--signal-ink); }
+.tag.v-high { color: var(--ok); border-color: var(--ok); }
+.tag.v-mid { color: var(--info); border-color: var(--info); }
+.tag.v-low { color: var(--muted); }
+.tag.v-none { color: var(--bad); border-color: var(--bad); }
+.why { display: block; font-size: .9em; line-height: 1.5; color: var(--ink); }
+
+.bar-sticky {
+  position: sticky; bottom: 0; z-index: 5; margin-top: 18px; padding: .8em 0 calc(.8em);
+  background: var(--bg); border-top: 2px solid var(--ink);
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .6em 1em;
+}
+.wallet { display: flex; align-items: center; gap: .6em; font: 600 1.05em var(--font-mono); font-variant-numeric: tabular-nums; }
+.wallet small { font: 500 .7em var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.wallet b { font-size: 1.5em; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Resultado do cenário */
+.outcome { margin-top: 14px; border: 2px solid var(--ink); background: var(--surface); }
+.outhead { background: var(--ink); color: var(--surface); padding: .6em 1.1em; font: 600 .75em var(--font-mono); text-transform: uppercase; letter-spacing: .12em; }
+.outbody { padding: 1.1em 1.2em 1.2em; display: grid; gap: 1em; }
+.nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.num b { display: block; font: 800 2.6em/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.num span { font: 500 .7em var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.risks { display: grid; gap: .8em; }
+.risk .rtop { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .2em 1em; font-size: .92em; margin-bottom: .3em; }
+.risk .rtop em { font: 500 .8em var(--font-mono); font-style: normal; color: var(--muted); }
+.risk .bar { height: 12px; background: var(--ok-bg); border: 1px solid var(--line); }
+.risk .bar i { display: block; height: 100%; background: var(--bad); }
+.risk .rleft { font: 500 .78em var(--font-mono); color: var(--muted); margin-top: .25em; }
+.bestline { margin: 0; font-size: .92em; }
+.bestline b { font-weight: 700; }
+
+/* Resultado final */
+.result-head { background: var(--signal); color: var(--signal-ink); padding: 1.4em 1.5em 0; overflow: hidden; }
+.scorebig { margin: 0; font: 800 clamp(4.5rem, 18vw, 8rem)/.85 var(--font-display); font-variant-numeric: tabular-nums; outline: none; }
+.scoreunit { font: 600 .8em var(--font-mono); text-transform: uppercase; letter-spacing: .12em; margin: .6em 0 0; }
+.rankname { margin: .5em 0 0; font: 800 clamp(1.8rem, 6vw, 2.8rem)/1 var(--font-display); text-transform: uppercase; }
+.rankmsg { margin: .5em 0 0; max-width: 34em; font-weight: 500; }
+.list { display: grid; gap: .7em; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .2em 1em; align-items: baseline; padding-bottom: .6em; border-bottom: 1px solid var(--line); font-size: .95em; }
+.item:last-child { border-bottom: 0; padding-bottom: 0; }
+.item .it { font-weight: 600; }
+.item .iv { font: 600 1em var(--font-mono); font-variant-numeric: tabular-nums; }
+.item .is { grid-column: 1 / -1; font: 500 .8em var(--font-mono); color: var(--muted); }
+
+.foot { margin-top: 28px; font-size: .78em; color: var(--muted); max-width: 52em; }
+
+@media (max-width: 480px) { .nums { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<div class="app" id="app">
+  <div class="top">
+    <span>CIPA · Prevenção de riscos</span>
+    <label class="switch"><input type="checkbox" id="bigMode"> Modo projetor</label>
+  </div>
+
+  <!-- Início -->
+  <section id="start" class="grid" aria-labelledby="t-start">
+    <div class="stack">
+      <div class="hero">
+        <p class="eyebrow">Jogo de decisão · gestão de riscos</p>
+        <h1 id="t-start">Invista na Prevenção</h1>
+        <p class="lead">Em cada cenário, você tem 600 moedas para melhorar o local de trabalho. Não dá para comprar tudo, e nem toda melhoria reduz o risco que mais importa.</p>
+        <div class="stripes" aria-hidden="true"></div>
+      </div>
+      <form class="panel" id="setup" autocomplete="off">
+        <div class="field">
+          <label class="lbl" for="player">Nome do jogador ou da equipe</label>
+          <input type="text" id="player" maxlength="24" placeholder="Ex.: Equipe da Manutenção">
+        </div>
+        <div class="field">
+          <label class="lbl" for="count">Quantidade de cenários</label>
+          <select id="count">
+            <option value="3">3 cenários (rápido)</option>
+            <option value="4" selected>4 cenários</option>
+            <option value="6">6 cenários (todos)</option>
+          </select>
+        </div>
+        <dl class="rules">
+          <div><dt>Orçamento</dt><dd>600 moedas novas a cada cenário</dd></div>
+          <div><dt>Tempo</dt><dd>sem cronômetro: pensem e discutam antes de confirmar</dd></div>
+          <div><dt>Pontos</dt><dd>até 100 por cenário, comparando com a melhor combinação possível</dd></div>
+        </dl>
+        <button type="submit" class="btn">Começar o jogo</button>
+      </form>
+    </div>
+    <aside class="panel board" aria-labelledby="t-board">
+      <h2 id="t-board">Ranking</h2>
+      <ol id="boardStart"></ol>
+      <p class="note">Salvo neste aparelho e neste navegador.</p>
+      <button type="button" class="linkbtn" id="clearBoard">Limpar ranking</button>
+    </aside>
+  </section>
+
+  <!-- Jogo -->
+  <section id="play" hidden aria-label="Cenário">
+    <div class="hud">
+      <div class="segs" id="segs" aria-hidden="true"></div>
+      <div class="hudrow">
+        <span id="qcount">Cenário 1 de 4</span>
+        <span>Pontos <b id="score">0</b></span>
+      </div>
+    </div>
+
+    <article class="qcard">
+      <div class="qhead" id="place">Local</div>
+      <div class="qbody">
+        <h2 id="title" tabindex="-1"></h2>
+        <p id="story"></p>
+        <p class="obs-title">O que você observa na visita</p>
+        <ul class="obs" id="obs"></ul>
+      </div>
+    </article>
+
+    <div class="outcome" id="outcome" hidden aria-live="polite">
+      <div class="outhead">Resultado deste cenário</div>
+      <div class="outbody">
+        <div class="nums">
+          <div class="num"><b id="oGain">0%</b><span>Risco reduzido por você</span></div>
+          <div class="num"><b id="oBest">0%</b><span>Melhor possível com 600</span></div>
+          <div class="num"><b id="oPts">0</b><span>Pontos no cenário</span></div>
+        </div>
+        <div class="risks" id="risks"></div>
+        <p class="bestline" id="bestline"></p>
+        <p class="bestline" id="leftline"></p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h3>Melhorias disponíveis</h3>
+      <span id="secHint">Toque para investir. Toque de novo para desfazer.</span>
+    </div>
+    <div class="cards" id="cards"></div>
+
+    <div class="bar-sticky">
+      <div class="wallet">
+        <span class="coin" aria-hidden="true">$</span>
+        <div><b id="coinLeft">600</b> <small>de 600 moedas disponíveis</small></div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn quiet" id="clear">Desfazer tudo</button>
+        <button type="button" class="btn" id="confirm" disabled>Confirmar investimentos</button>
+        <button type="button" class="btn" id="next" hidden>Próximo cenário</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Resultado final -->
+  <section id="result" hidden class="grid" aria-labelledby="t-result">
+    <div class="stack">
+      <div class="result-head">
+        <p class="eyebrow" id="resName">Resultado</p>
+        <h2 class="scorebig" id="t-result" tabindex="-1">0</h2>
+        <p class="scoreunit">de 1000 pontos</p>
+        <p class="rankname" id="rankName"></p>
+        <p class="rankmsg" id="rankMsg"></p>
+        <div class="stripes" aria-hidden="true"></div>
+      </div>
+      <div class="panel">
+        <h3 class="section-title">Cenário por cenário</h3>
+        <div class="list" id="finalList"></div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn" id="again">Jogar de novo</button>
+        <button type="button" class="btn quiet" id="toStart">Voltar ao início</button>
+      </div>
+    </div>
+    <aside class="panel board" aria-labelledby="t-board2">
+      <h2 id="t-board2">Ranking</h2>
+      <ol id="boardResult"></ol>
+      <p class="note">Salvo neste aparelho e neste navegador.</p>
+    </aside>
+  </section>
+
+  <p class="foot">Os cenários, os custos em moedas e o peso de cada risco são fictícios e servem para provocar a discussão. As medidas se apoiam nas Normas Regulamentadoras (NR-5, NR-6, NR-10, NR-12, NR-15, NR-17, NR-23, NR-26, NR-33 e NR-35). Valide o gabarito com o SESMT da sua empresa e adapte os cenários à realidade do local.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var BUDGET = 600;
+  var KEY = "invista-prevencao-ranking-v1", NAMEKEY = "invista-prevencao-nome";
+
+  /* Cada risco tem um peso (soma 100). Cada melhoria tem um custo e uma fração de redução por risco (fx).
+     Efeitos de várias melhorias no mesmo risco se combinam de forma decrescente. */
+  var SCENARIOS = [
+    { place: "Oficina de manutenção", title: "Oficina mecânica",
+      story: "Você faz a inspeção mensal da oficina de manutenção, que tem 12 trabalhadores no turno.",
+      obs: [
+        "A esmerilhadeira de bancada está sem o protetor do disco.",
+        "Há uma poça de óleo ao redor da prensa, perto da passagem principal.",
+        "O ruído é alto e ninguém usa protetor auricular.",
+        "O extintor mais próximo está atrás de caixas empilhadas e sem sinalização."
+      ],
+      risks: [
+        { id: "a", name: "Acidente com o disco da esmerilhadeira", w: 35 },
+        { id: "b", name: "Queda por piso com óleo", w: 20 },
+        { id: "c", name: "Perda auditiva", w: 20 },
+        { id: "d", name: "Incêndio sem combate rápido", w: 25 }
+      ],
+      opts: [
+        { n: "Instalar o protetor do disco na esmerilhadeira", cost: 150, fx: { a: .85 }, e: "Proteção física na fonte do perigo, como pede a NR-12. Resolve quase todo o risco do disco." },
+        { n: "Treinar a equipe no uso seguro da esmerilhadeira", cost: 120, fx: { a: .3 }, e: "Treinar ajuda, mas não substitui a proteção física. Funciona melhor junto com o protetor." },
+        { n: "Colocar um cartaz de “Cuidado: máquina perigosa”", cost: 30, fx: { a: .05 }, e: "Aviso sozinho quase não muda o risco. O disco continua exposto." },
+        { n: "Corrigir o vazamento e limpar o óleo com material absorvente", cost: 100, fx: { b: .85 }, e: "Elimina a origem do piso escorregadio. Só limpar, sem corrigir o vazamento, adia o problema." },
+        { n: "Fornecer protetores auriculares para todos", cost: 80, fx: { c: .5 }, e: "O EPI é a última barreira: ajuda, mas depende do uso correto e o ruído continua alto." },
+        { n: "Enclausurar ou fazer a manutenção da fonte de ruído", cost: 220, fx: { c: .7 }, e: "Reduz o ruído na origem e protege todos, não só quem usa o EPI." },
+        { n: "Desobstruir, sinalizar e revisar os extintores", cost: 70, fx: { d: .75 }, e: "Barato e muito eficaz. O extintor só serve se der para chegar nele rápido e se estiver na validade." },
+        { n: "Instalar câmeras de monitoramento", cost: 250, fx: {}, e: "A câmera registra o que acontece, mas não reduz nenhum desses riscos." }
+      ] },
+
+    { place: "Setor administrativo", title: "Escritório",
+      story: "Setor administrativo com 20 pessoas, que trabalham cerca de 8 horas por dia no computador.",
+      obs: [
+        "As cadeiras são antigas, sem regulagem de altura nem de encosto.",
+        "Os monitores ficam direto sobre a mesa, abaixo da altura dos olhos.",
+        "Cabos de computador atravessam o corredor entre as mesas.",
+        "Uma única tomada alimenta vários benjamins e um aquecedor."
+      ],
+      risks: [
+        { id: "a", name: "Dores e lesões por postura e esforço repetitivo", w: 40 },
+        { id: "b", name: "Tropeços e quedas por cabos soltos", w: 25 },
+        { id: "c", name: "Incêndio por sobrecarga elétrica", w: 35 }
+      ],
+      opts: [
+        { n: "Comprar cadeiras ajustáveis, conforme a NR-17", cost: 300, fx: { a: .5 }, e: "Ajuda bastante, mas é cara e, sozinha, não corrige o monitor baixo nem a falta de pausas." },
+        { n: "Instalar suportes de monitor e apoios para os pés", cost: 120, fx: { a: .35 }, e: "Corrige a altura da tela e a postura do pescoço por um custo menor." },
+        { n: "Criar pausas programadas e ginástica laboral", cost: 80, fx: { a: .3 }, e: "Interrompe a sobrecarga muscular e custa pouco. É um bom complemento." },
+        { n: "Instalar canaletas e reorganizar os cabos", cost: 70, fx: { b: .9 }, e: "Tira o cabo do caminho. Solução simples e definitiva para o tropeço." },
+        { n: "Colocar um cartaz de “Cuidado com os fios”", cost: 20, fx: { b: .1 }, e: "O fio continua no chão. O aviso quase não muda o risco." },
+        { n: "Contratar eletricista para novo circuito e mais tomadas", cost: 160, fx: { c: .85 }, e: "Resolve a causa: a instalação não suporta a carga. É a prioridade contra o incêndio." },
+        { n: "Trocar os benjamins por réguas com protetor de sobrecarga", cost: 50, fx: { c: .25 }, e: "É melhor que o benjamim, mas a tomada continua com carga acima do previsto." },
+        { n: "Pintar as paredes com cores relaxantes", cost: 120, fx: {}, e: "Melhora o visual, mas não reduz nenhum desses riscos." }
+      ] },
+
+    { place: "Obra", title: "Telhado do galpão",
+      story: "Reforma do telhado de um galpão, a 6 metros de altura, com 5 trabalhadores.",
+      obs: [
+        "Os trabalhadores caminham na borda do telhado sem guarda-corpo e sem cinto.",
+        "Uma escada de madeira improvisada é usada para subir.",
+        "Telhas e ferramentas ficam soltas na beirada, acima de uma passagem de pedestres.",
+        "Uma rede elétrica energizada passa a cerca de 1 metro do ponto de trabalho."
+      ],
+      risks: [
+        { id: "a", name: "Queda de altura", w: 45 },
+        { id: "b", name: "Queda de materiais sobre quem passa", w: 20 },
+        { id: "c", name: "Choque elétrico com a rede energizada", w: 35 }
+      ],
+      opts: [
+        { n: "Instalar guarda-corpo e linha de vida com pontos de ancoragem", cost: 250, fx: { a: .85 }, e: "Proteção coletiva e ancoragem são a primeira escolha em trabalho em altura (NR-35)." },
+        { n: "Fornecer cinto tipo paraquedista e treinamento da NR-35", cost: 180, fx: { a: .6 }, e: "É necessário para quem trabalha em altura, mas depende de ancoragem e de uso correto." },
+        { n: "Trocar a escada improvisada por uma apropriada e fixada", cost: 70, fx: { a: .25 }, e: "Reduz o risco do acesso, mas não protege quem anda pela borda do telhado." },
+        { n: "Instalar rodapé, tela e isolar a área de baixo", cost: 120, fx: { b: .8 }, e: "Impede que o material caia e mantém as pessoas fora da zona de queda." },
+        { n: "Fornecer capacete com jugular para todos", cost: 60, fx: { b: .4 }, e: "Protege a cabeça, mas não impede que o material caia." },
+        { n: "Pedir à concessionária para desligar ou isolar a rede durante o serviço", cost: 100, fx: { c: .9 }, e: "Elimina o perigo. Sem energia, não há choque." },
+        { n: "Sinalizar com fita e orientar a distância mínima da rede", cost: 40, fx: { c: .3 }, e: "Ajuda a manter distância, mas a rede continua energizada." },
+        { n: "Pagar bônus por produtividade", cost: 200, fx: {}, e: "Prêmio por pressa pode até aumentar o risco. Não reduz nenhum deles." }
+      ] },
+
+    { place: "Centro de distribuição", title: "Almoxarifado",
+      story: "Centro de distribuição com 25 pessoas e duas empilhadeiras operando no mesmo turno.",
+      obs: [
+        "As empilhadeiras circulam nos mesmos corredores dos pedestres, sem faixas nem barreiras.",
+        "As prateleiras altas estão cheias além da capacidade e sem fixação no piso.",
+        "Frascos de produtos de limpeza estão sem rótulo e sem ficha de segurança.",
+        "Os trabalhadores levantam caixas de mais de 25 kg com as mãos."
+      ],
+      risks: [
+        { id: "a", name: "Atropelamento por empilhadeira", w: 30 },
+        { id: "b", name: "Queda de prateleira ou de cargas", w: 25 },
+        { id: "c", name: "Exposição a produtos químicos", w: 20 },
+        { id: "d", name: "Lesão na coluna", w: 25 }
+      ],
+      opts: [
+        { n: "Demarcar faixas de pedestres, instalar barreiras e espelhos nos cruzamentos", cost: 140, fx: { a: .7 }, e: "Separa pessoas e máquinas. É a medida mais forte contra o atropelamento." },
+        { n: "Instalar alarme de ré e sinal luminoso, limitar a velocidade e treinar os operadores", cost: 110, fx: { a: .5 }, e: "Avisa e reduz o risco, mas sem separar o fluxo ele continua." },
+        { n: "Fixar as prateleiras e colocar placas de carga máxima", cost: 180, fx: { b: .85 }, e: "Ataca a causa: estrutura firme e carga dentro do limite." },
+        { n: "Rotular os produtos, ter as fichas de segurança e separar o armazenamento", cost: 100, fx: { c: .8 }, e: "Quem não sabe o que manuseia não consegue se proteger. Rótulo e separação evitam misturas e contatos." },
+        { n: "Fornecer luvas e óculos para quem manuseia os produtos", cost: 50, fx: { c: .35 }, e: "Protege no contato, mas não resolve a falta de identificação." },
+        { n: "Comprar paleteira e carrinhos para as cargas pesadas", cost: 130, fx: { d: .75 }, e: "Tira o esforço do corpo. É melhor que apenas orientar como levantar." },
+        { n: "Dar um curso de postura para levantar peso", cost: 60, fx: { d: .25 }, e: "Ajuda, mas a carga continua pesada demais para ser levantada à mão." },
+        { n: "Pintar as paredes do galpão com a cor da empresa", cost: 110, fx: {}, e: "O visual não reduz nenhum desses riscos." }
+      ] },
+
+    { place: "Refeitório", title: "Cozinha industrial",
+      story: "Cozinha de refeitório que serve 300 refeições por dia, com 8 cozinheiros por turno.",
+      obs: [
+        "O piso fica com gordura e água durante o preparo, e o calçado é comum.",
+        "Dois botijões de gás ficam dentro da cozinha, com mangueiras ressecadas.",
+        "Os funcionários cortam alimentos com facas e processador sem treinamento.",
+        "Panelas quentes são movimentadas sem luva térmica."
+      ],
+      risks: [
+        { id: "a", name: "Queda por piso escorregadio", w: 25 },
+        { id: "b", name: "Vazamento e explosão de gás", w: 40 },
+        { id: "c", name: "Cortes", w: 15 },
+        { id: "d", name: "Queimaduras", w: 20 }
+      ],
+      opts: [
+        { n: "Instalar uma central de gás externa e ventilada, com mangueiras novas", cost: 220, fx: { b: .9 }, e: "Tira o gás de dentro da cozinha. É a medida de maior prioridade neste cenário." },
+        { n: "Revisar as mangueiras e testar vazamentos com espuma", cost: 50, fx: { b: .4 }, e: "Barato e útil, mas o gás continua dentro da cozinha." },
+        { n: "Trocar por piso antiderrapante com ralos", cost: 160, fx: { a: .8 }, e: "Resolve o piso na origem, com água escorrendo e menos gordura acumulada." },
+        { n: "Fornecer calçado antiderrapante para todos", cost: 70, fx: { a: .45 }, e: "Ajuda bastante, mas é EPI: o piso continua escorregadio." },
+        { n: "Treinar o uso de facas e fornecer luvas de malha de aço", cost: 90, fx: { c: .7 }, e: "Treino e proteção juntos reduzem bem os cortes." },
+        { n: "Fornecer luvas térmicas e aventais, e carrinhos para as panelas", cost: 100, fx: { d: .7 }, e: "Evita o contato com superfícies quentes e reduz o carregamento manual." },
+        { n: "Instalar extintor adequado e treinar a equipe para usá-lo", cost: 90, fx: { b: .15, d: .15 }, e: "Ajuda a controlar o fogo, mas não evita o vazamento. É necessário, mas não resolve." },
+        { n: "Colocar uma placa de “Cozinha Segura” na entrada", cost: 20, fx: {}, e: "Placa sem mudança concreta não reduz nenhum risco." }
+      ] },
+
+    { place: "Pintura e solventes", title: "Cabine de pintura",
+      story: "Cabine de pintura industrial com 6 trabalhadores que usam tintas e solventes durante o turno.",
+      obs: [
+        "Os vapores de solvente se acumulam e ninguém usa respirador adequado.",
+        "Latas abertas ficam sobre a bancada, perto de um motor que solta faíscas.",
+        "Não há chuveiro nem lava-olhos, e os trabalhadores usam luvas de pano.",
+        "O ambiente tem ventilação natural fraca."
+      ],
+      risks: [
+        { id: "a", name: "Inalação de vapores", w: 35 },
+        { id: "b", name: "Incêndio ou explosão de vapores", w: 35 },
+        { id: "c", name: "Contato dos solventes com olhos e pele", w: 30 }
+      ],
+      opts: [
+        { n: "Instalar exaustão local e ventilação adequada", cost: 250, fx: { a: .8, b: .3 }, e: "Retira o vapor na origem e também diminui o risco de incêndio. É a medida mais completa." },
+        { n: "Fornecer respirador com filtro para vapores orgânicos e fazer teste de vedação", cost: 110, fx: { a: .5 }, e: "Protege quem usa, mas o vapor continua no ar. É a última barreira." },
+        { n: "Instalar armário corta-fogo, manter as latas fechadas e limitar a quantidade na bancada", cost: 150, fx: { b: .7 }, e: "Reduz o combustível disponível e a chance de o vapor encontrar uma fonte de ignição." },
+        { n: "Trocar o motor por modelo à prova de explosão e aterrar os equipamentos", cost: 120, fx: { b: .6 }, e: "Elimina a fonte de ignição, que é uma das pontas do problema." },
+        { n: "Instalar chuveiro de emergência e lava-olhos", cost: 140, fx: { c: .5 }, e: "Reduz a gravidade do acidente, mas não evita o contato." },
+        { n: "Fornecer luvas e óculos adequados ao solvente", cost: 70, fx: { c: .6 }, e: "Evita o contato direto. Luva de pano não protege contra solvente." },
+        { n: "Abrir as janelas durante o trabalho", cost: 10, fx: { a: .1 }, e: "Ajuda um pouco, mas não substitui a exaustão." },
+        { n: "Comprar aromatizador de ambiente", cost: 30, fx: {}, e: "Mascara o cheiro, mas o vapor continua no ar." }
+      ] }
+  ];
+
+  var RANKS = [
+    { min: 85, name: "Gestor de Risco", msg: "Você enxerga onde está o perigo e coloca o dinheiro onde ele mais reduz o risco." },
+    { min: 70, name: "Olhar Preventivo", msg: "Boas escolhas. Revise os cenários em que o investimento ficou distante da melhor combinação." },
+    { min: 50, name: "Em Formação", msg: "Você acertou boa parte. Atenção à hierarquia: eliminar o perigo vem antes de avisar ou de usar EPI." },
+    { min: 0, name: "Começando Agora", msg: "Leia as explicações de cada melhoria e jogue de novo. O padrão fica claro na segunda rodada." }
+  ];
+
+  function $(s) { return document.querySelector(s); }
+  function h(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function pct(x) { return Math.round(x) + "%"; }
+
+  /* Cálculo de risco */
+  function evalSet(sc, picks) {
+    var res = {}, gain = 0;
+    sc.risks.forEach(function (r) {
+      var p = 1;
+      picks.forEach(function (i) { var f = sc.opts[i].fx[r.id]; if (f) p *= (1 - f); });
+      res[r.id] = p;
+      gain += r.w * (1 - p);
+    });
+    return { gain: gain, res: res };
+  }
+  function bestSet(sc) {
+    var n = sc.opts.length, bg = -1, bp = [], bc = 0, allowed = 0;
+    for (var k = 0; k < n; k++) if (evalSet(sc, [k]).gain >= 6) allowed |= (1 << k);
+    for (var m = 0; m < (1 << n); m++) {
+      if (m & ~allowed) continue;
+      var picks = [], cost = 0;
+      for (var i = 0; i < n; i++) if (m & (1 << i)) { picks.push(i); cost += sc.opts[i].cost; }
+      if (cost > BUDGET) continue;
+      var g = evalSet(sc, picks).gain;
+      if (g > bg + 1e-9 || (Math.abs(g - bg) < 1e-9 && cost < bc)) { bg = g; bp = picks; bc = cost; }
+    }
+    return { gain: bg, picks: bp, cost: bc };
+  }
+  SCENARIOS.forEach(function (sc) { sc.best = bestSet(sc); });
+
+  /* Ranking */
+  var board = [];
+  try {
+    var raw = JSON.parse(localStorage.getItem(KEY) || "[]");
+    if (Array.isArray(raw)) board = raw;
+  } catch (e) { board = []; }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(board)); } catch (e) {} }
+
+  function renderBoard(ol, hlId) {
+    ol.replaceChildren();
+    if (!board.length) {
+      ol.append(h("li", "empty", "Ninguém jogou ainda. O primeiro lugar está livre."));
+      return;
+    }
+    board.slice(0, 8).forEach(function (r, i) {
+      var li = h("li", r.id === hlId ? "me" : "");
+      li.append(h("span", "pos", (i + 1) + "º"), h("span", "nm", r.name), h("span", "pts", String(r.score)));
+      ol.append(li);
+    });
+  }
+
+  function show(id) {
+    ["start", "play", "result"].forEach(function (s) { $("#" + s).hidden = s !== id; });
+    window.scrollTo(0, 0);
+  }
+
+  /* Estado */
+  var round = [], si = 0, picked = [], revealed = false, totalScore = 0, details = [], playerName = "", cards = [];
+
+  try { $("#player").value = localStorage.getItem(NAMEKEY) || ""; } catch (e) {}
+  renderBoard($("#boardStart"));
+
+  $("#bigMode").addEventListener("change", function (e) { $("#app").classList.toggle("big", e.target.checked); });
+  $("#setup").addEventListener("submit", function (e) { e.preventDefault(); startGame(); });
+  $("#again").addEventListener("click", startGame);
+  $("#toStart").addEventListener("click", function () { renderBoard($("#boardStart")); show("start"); });
+
+  var clearArmed = false, clearTimer = null;
+  $("#clearBoard").addEventListener("click", function () {
+    var btn = $("#clearBoard");
+    if (!clearArmed) {
+      clearArmed = true;
+      btn.textContent = "Clique de novo para apagar tudo";
+      clearTimer = setTimeout(function () { clearArmed = false; btn.textContent = "Limpar ranking"; }, 4000);
+      return;
+    }
+    clearTimeout(clearTimer);
+    clearArmed = false;
+    btn.textContent = "Limpar ranking";
+    board = [];
+    persist();
+    renderBoard($("#boardStart"));
+  });
+
+  function startGame() {
+    var typed = $("#player").value.trim();
+    playerName = (typed || "Anônimo").slice(0, 24);
+    try { localStorage.setItem(NAMEKEY, typed); } catch (e) {}
+    var n = parseInt($("#count").value, 10) || 4;
+    round = shuffle(SCENARIOS).slice(0, n);
+    si = 0; totalScore = 0; details = [];
+    var segs = $("#segs");
+    segs.replaceChildren();
+    for (var i = 0; i < n; i++) segs.append(document.createElement("span"));
+    segs.style.gridTemplateColumns = "repeat(" + n + ", minmax(0, 1fr))";
+    show("play");
+    loadScenario();
+  }
+
+  function updateSegs() {
+    var spans = $("#segs").children;
+    for (var i = 0; i < spans.length; i++) {
+      var d = details[i];
+      spans[i].className = d ? (d.pts >= 70 ? "good" : d.pts >= 40 ? "mid" : "poor") : (i === si ? "cur" : "");
+    }
+  }
+
+  function spent() { return picked.reduce(function (s, i) { return s + round[si].opts[i].cost; }, 0); }
+
+  function loadScenario() {
+    var sc = round[si];
+    picked = []; revealed = false;
+    $("#place").textContent = sc.place;
+    $("#title").textContent = sc.title;
+    $("#story").textContent = sc.story;
+    var obs = $("#obs");
+    obs.replaceChildren();
+    sc.obs.forEach(function (t) { obs.append(h("li", "", t)); });
+    $("#outcome").hidden = true;
+    $("#qcount").textContent = "Cenário " + (si + 1) + " de " + round.length;
+    $("#score").textContent = totalScore;
+    $("#secHint").textContent = "Toque para investir. Toque de novo para desfazer.";
+    $("#confirm").hidden = false; $("#clear").hidden = false; $("#next").hidden = true;
+
+    var box = $("#cards");
+    box.replaceChildren();
+    cards = sc.opts.map(function (o, i) {
+      var b = h("button", "card");
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      var row = h("span", "row");
+      var cost = h("span", "cost");
+      cost.append(h("span", "coin", "$"), document.createTextNode(String(o.cost)));
+      row.append(h("span", "mname", o.n), cost);
+      b.append(row);
+      b.addEventListener("click", function () { toggle(i); });
+      box.append(b);
+      return b;
+    });
+    updateCards();
+    updateSegs();
+    $("#title").focus({ preventScroll: true });
+  }
+
+  function updateCards() {
+    var sc = round[si], left = BUDGET - spent();
+    cards.forEach(function (b, i) {
+      var on = picked.indexOf(i) >= 0;
+      b.classList.toggle("sel", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      var lock = !revealed && !on && sc.opts[i].cost > left;
+      b.classList.toggle("locked", lock);
+      b.disabled = revealed || lock;
+    });
+    $("#coinLeft").textContent = left;
+    $("#confirm").disabled = picked.length === 0;
+  }
+
+  function toggle(i) {
+    if (revealed) return;
+    var k = picked.indexOf(i);
+    if (k >= 0) picked.splice(k, 1);
+    else if (round[si].opts[i].cost <= BUDGET - spent()) picked.push(i);
+    updateCards();
+  }
+
+  $("#clear").addEventListener("click", function () { if (!revealed) { picked = []; updateCards(); } });
+  $("#confirm").addEventListener("click", function () { if (!revealed && picked.length) reveal(); });
+  $("#next").addEventListener("click", function () {
+    if (si === round.length - 1) finish();
+    else { si++; loadScenario(); }
+  });
+
+  function gravity(w) { return w >= 35 ? "gravidade alta" : w >= 25 ? "gravidade média" : "gravidade menor"; }
+
+  function reveal() {
+    revealed = true;
+    var sc = round[si];
+    var mine = evalSet(sc, picked);
+    var bestGain = Math.max(sc.best.gain, mine.gain);
+    var pts = Math.max(0, Math.min(100, Math.round(100 * mine.gain / bestGain)));
+    totalScore += pts;
+    var left = BUDGET - spent();
+    details.push({ title: sc.title, pts: pts, gain: mine.gain, best: bestGain, left: left });
+
+    $("#oGain").textContent = pct(mine.gain);
+    $("#oBest").textContent = pct(bestGain);
+    $("#oPts").textContent = pts;
+
+    var risks = $("#risks");
+    risks.replaceChildren();
+    sc.risks.forEach(function (r) {
+      var wrap = h("div", "risk"), top = h("div", "rtop"), bar = h("div", "bar"), fill = document.createElement("i");
+      var rest = mine.res[r.id] * 100;
+      top.append(h("span", "", r.name), h("em", "", gravity(r.w)));
+      fill.style.width = rest + "%";
+      bar.append(fill);
+      wrap.append(top, bar, h("div", "rleft", "Risco restante: " + pct(rest)));
+      risks.append(wrap);
+    });
+
+    $("#bestline").textContent = "";
+    var bl = $("#bestline");
+    bl.append(h("b", "", "Melhor combinação com 600 moedas: "),
+      document.createTextNode(sc.best.picks.map(function (i) { return sc.opts[i].n; }).join("; ") + " (" + sc.best.cost + " moedas)."));
+    $("#leftline").textContent = left > 0
+      ? "Você terminou com " + left + " moedas sobrando." + (left >= 100 ? " Dinheiro parado não reduz risco: vale perguntar onde ele faria mais efeito." : "")
+      : "Você usou todas as moedas.";
+
+    cards.forEach(function (b, i) {
+      var o = sc.opts[i], solo = evalSet(sc, [i]).gain;
+      var on = picked.indexOf(i) >= 0, inBest = sc.best.picks.indexOf(i) >= 0;
+      var tags = h("span", "tags");
+      if (on) tags.append(h("span", "tag mine", "Você investiu"));
+      if (inBest) tags.append(h("span", "tag best", "Na melhor combinação"));
+      var v = solo >= 15 ? ["v-high", "Alta prioridade"] : solo >= 6 ? ["v-mid", "Complementar"] : solo > 0 ? ["v-low", "Efeito pequeno"] : ["v-none", "Não reduz o risco"];
+      tags.append(h("span", "tag " + v[0], v[1] + (solo > 0 ? " · até " + pct(solo) : "")));
+      b.append(tags, h("span", "why", o.e));
+    });
+
+    $("#secHint").textContent = "Veja o que cada melhoria faz de verdade.";
+    $("#confirm").hidden = true; $("#clear").hidden = true;
+    $("#next").hidden = false;
+    $("#next").textContent = si === round.length - 1 ? "Ver resultado final" : "Próximo cenário";
+    $("#score").textContent = totalScore;
+    updateCards();
+    updateSegs();
+    $("#outcome").hidden = false;
+    $("#outcome").scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
+  /* Resultado final */
+  function finish() {
+    var n = round.length;
+    var final = Math.round(totalScore / n * 10);
+    var avg = totalScore / n;
+    var rank = RANKS.find(function (r) { return avg >= r.min; });
+
+    var entry = { id: Date.now(), name: playerName, score: final, n: n };
+    board.push(entry);
+    board.sort(function (a, b) { return b.score - a.score || a.id - b.id; });
+    board = board.slice(0, 20);
+    persist();
+
+    $("#resName").textContent = playerName;
+    $("#t-result").textContent = final;
+    $("#rankName").textContent = rank.name;
+    $("#rankMsg").textContent = rank.msg;
+
+    var list = $("#finalList");
+    list.replaceChildren();
+    details.forEach(function (d) {
+      var it = h("div", "item");
+      it.append(h("span", "it", d.title), h("span", "iv", d.pts + " pts"),
+        h("span", "is", "Você reduziu " + pct(d.gain) + " do risco · melhor possível " + pct(d.best) + " · sobraram " + d.left + " moedas"));
+      list.append(it);
+    });
+
+    renderBoard($("#boardResult"), entry.id);
+    show("result");
+    $("#t-result").focus({ preventScroll: true });
+  }
+})();
+</script>
